@@ -35,13 +35,11 @@
     };
     ['score', 'bestScore', 'normalSuccess', 'normalFailure', 'specialSuccess', 'specialFailure'].forEach(function (key) { p[key] = count(value[key]); });
     p.success = p.normalSuccess + p.specialSuccess; p.failure = p.normalFailure + p.specialFailure;
-    p.text = p.title + ' · ' + p.difficulty + '\n이번 점수 ' + p.score + '점 · 최고 점수 ' + p.bestScore +
-      '점\n성공 ' + p.success + ' · 실패 ' + p.failure + '\n일반공 성공 ' + p.normalSuccess + ' · 특수공 성공 ' + p.specialSuccess;
     return Object.freeze(p);
   }
   function shareData(p, file) {
-    // 메시지에 클릭 가능한 주소를 넣고 PNG에도 같은 주소를 적는다. 앱별 첨부 지원 차이는 미리보기에서 안내한다.
-    return { title: p.title, text: p.text + '\n\n' + p.invitation + (p.gameUrl ? '\n' + p.gameUrl : ''), files: [file] };
+    // 기록 상세는 이미지에만 담고, 메시지에는 도전 문구와 실제 접속 링크만 남긴다.
+    return { title: p.title, text: p.invitation + (p.gameUrl ? '\n' + p.gameUrl : ''), files: [file] };
   }
   function canShareFile(nav, data) {
     try { return typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(data); }
@@ -101,16 +99,6 @@
     }
     c.fillText(String(value), x, y);
   }
-  function urlLines(c, text, maxWidth) {
-    c.font = '500 25px ' + font;
-    var lines = [''];
-    Array.from(text).forEach(function (char) {
-      var i = lines.length - 1;
-      if (c.measureText(lines[i] + char).width > maxWidth) lines.push(char); else lines[i] += char;
-    });
-    if (lines.length > 3) { lines = lines.slice(0, 3); lines[2] = lines[2].slice(0, -2) + '…'; }
-    return lines;
-  }
   function drawCard(canvas, p) {
     canvas.width = p.width; canvas.height = Math.round(p.width * 4 / 3);
     var c = canvas.getContext('2d');
@@ -131,12 +119,9 @@
     label(c, p.failure.toLocaleString('ko-KR'), 618, 664, 51, palette.ink, 285);
     label(c, '일반공 성공  ' + p.normalSuccess.toLocaleString('ko-KR'), 450, 766, 31, palette.ink, 690);
     label(c, '특수공 성공  ' + p.specialSuccess.toLocaleString('ko-KR'), 450, 819, 31, palette.ink, 690);
-    rounded(c, 95, 882, 710, 83, 20, palette.gold);
-    label(c, p.invitation, 450, 924, 35, palette.ink, 655);
-    if (p.gameUrl) {
-      var lines = urlLines(c, p.gameUrl, 682);
-      lines.forEach(function (line, i) { label(c, line, 450, 1004 + i * 34, 25, palette.ink, 685, 500); });
-    } else { label(c, '게임 공개 주소 준비 중', 450, 1036, 26, palette.muted); }
+    // PNG에는 누를 수 없는 주소/버튼을 넣지 않는다. 빈 공간은 초대 문구를 넓게 보여주는 데 쓴다.
+    rounded(c, 95, 882, 710, 190, 20, palette.gold);
+    label(c, p.invitation, 450, 977, 42, palette.ink, 655);
     label(c, 'JUGGLING MASTER', 450, 1121, 22, palette.muted);
     return canvas;
   }
