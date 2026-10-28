@@ -38,8 +38,10 @@
     return Object.freeze(p);
   }
   function shareData(p, file) {
-    // 기록 상세는 이미지에만 담고, 메시지에는 도전 문구와 실제 접속 링크만 남긴다.
-    return { title: p.title, text: p.invitation + (p.gameUrl ? '\n' + p.gameUrl : ''), files: [file] };
+    // 제목·기록·도전 문구는 메시지로 보내지 않는다. PNG와 실제 접속 링크만 전달한다.
+    var data = { files: [file] };
+    if (p.gameUrl) data.text = p.gameUrl;
+    return data;
   }
   function canShareFile(nav, data) {
     try { return typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(data); }
