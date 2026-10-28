@@ -3,8 +3,9 @@
   // 게임 종료 후에만 쓰는 공유 화면이다. 게임 데이터·저장소·외부 서버에 접근하지 않는다.
   var current = null;
   var prepared = null;
-  var sharing = null;
-  var font = 'system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+  var font = '"JMShareCard", sans-serif';
+  var fontReady = null;
+  var scriptUrl = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : null;
   var palette = { navy: '#1f2e4a', ink: '#21304a', gold: '#ffc33d', cream: '#f6f2e2', muted: '#667083' };
 
   function publicUrl(value) {
@@ -47,6 +48,16 @@
     try { return typeof nav.share === 'function' && typeof nav.canShare === 'function' && nav.canShare(data); }
     catch (_) { return false; }
   }
+  function loadCardFont() {
+    // 기기 기본 글꼴 대신 같은 배포 글꼴을 사용한다. 결과 화면에서만 한 번 읽어 게임 시작은 지연하지 않는다.
+    if (!fontReady) fontReady = Promise.resolve().then(function () {
+      if (!root.FontFace || !document.fonts) throw new Error('공유 글꼴 미지원');
+      var face = new root.FontFace('JMShareCard', 'url("' + new URL('share-card-font.woff2', scriptUrl || root.location.href).href + '")');
+      return face.load().then(function (loaded) { document.fonts.add(loaded); return loaded; });
+    }).catch(function (error) { fontReady = null; throw error; });
+    return fontReady;
+  }
+  function formatNumber(value) { return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
   function prepare(value) {
     var p = snapshot(value, root.location.href);
     var key = JSON.stringify(p);
@@ -54,7 +65,7 @@
     var entry = { key: key, payload: p, blob: null, file: null, failed: false };
     prepared = entry;
     // 결과 화면에 들어갈 때 PNG를 미리 만든다. 이 과정에서는 공유창·복사·다운로드를 실행하지 않는다.
-    entry.ready = Promise.resolve(document.fonts ? document.fonts.ready : null).then(function () {
+    entry.ready = loadCardFont().then(function () {
       var canvas = drawCard(document.createElement('canvas'), p);
       return new Promise(function (resolve, reject) {
         canvas.toBlob(function (blob) {
@@ -73,18 +84,9 @@
     else close();
   }
   function requestShare(value) {
-    if (sharing || current && current.busy) return false;
-    var entry = prepare(value);
-    var data = shareData(entry.payload, entry.file);
-    if (!entry.file || !canShareFile(root.navigator, data)) { open(value); return false; }
-    close(); sharing = entry;
-    var operation;
-    // 결과창의 공유 버튼 동작에서 바로 시스템 공유창을 연다. 사용자가 복사/저장할 필요가 없다.
-    try { operation = root.navigator.share(data); } catch (error) { operation = Promise.reject(error); }
-    Promise.resolve(operation).catch(function (error) {
-      // 취소하면 결과 화면에 그대로 남는다. 실패한 경우에만 대체 공유 화면을 제공한다.
-      if ((!error || error.name !== 'AbortError') && prepared === entry) open(value);
-    }).finally(function () { sharing = null; });
+    if (current) return false;
+    // iOS/Android 모두 동일한 게임 내 미리보기와 명시적인 공유 동작을 거친다.
+    open(value);
     return true;
   }
   function rounded(c, x, y, w, h, radius, color) {
@@ -113,14 +115,14 @@
     rounded(c, 340, 217, 220, 50, 25, palette.navy);
     label(c, p.difficulty, 450, 243, 28, '#ffffff', 190);
     label(c, '이번 점수', 450, 322, 32, palette.muted);
-    label(c, p.score.toLocaleString('ko-KR') + '점', 450, 421, 112, palette.ink, 690);
-    label(c, '최고 점수  ' + p.bestScore.toLocaleString('ko-KR') + '점', 450, 515, 33, palette.muted, 680);
+    label(c, formatNumber(p.score) + '점', 450, 421, 112, palette.ink, 690);
+    label(c, '최고 점수  ' + formatNumber(p.bestScore) + '점', 450, 515, 33, palette.muted, 680);
     rounded(c, 95, 567, 710, 154, 20, '#e8e5d8');
     label(c, '성공', 282, 605, 27, palette.muted); label(c, '실패', 618, 605, 27, palette.muted);
-    label(c, p.success.toLocaleString('ko-KR'), 282, 664, 51, palette.ink, 285);
-    label(c, p.failure.toLocaleString('ko-KR'), 618, 664, 51, palette.ink, 285);
-    label(c, '일반공 성공  ' + p.normalSuccess.toLocaleString('ko-KR'), 450, 766, 31, palette.ink, 690);
-    label(c, '특수공 성공  ' + p.specialSuccess.toLocaleString('ko-KR'), 450, 819, 31, palette.ink, 690);
+    label(c, formatNumber(p.success), 282, 664, 51, palette.ink, 285);
+    label(c, formatNumber(p.failure), 618, 664, 51, palette.ink, 285);
+    label(c, '일반공 성공  ' + formatNumber(p.normalSuccess), 450, 766, 31, palette.ink, 690);
+    label(c, '특수공 성공  ' + formatNumber(p.specialSuccess), 450, 819, 31, palette.ink, 690);
     // PNG에는 누를 수 없는 주소/버튼을 넣지 않는다. 빈 공간은 초대 문구를 넓게 보여주는 데 쓴다.
     rounded(c, 95, 882, 710, 190, 20, palette.gold);
     label(c, p.invitation, 450, 977, 42, palette.ink, 655);
@@ -159,10 +161,11 @@
     var actions = element('div', 'jm-share-actions');
     var save = element('button', '', '이미지 저장'); save.type = 'button'; save.disabled = true;
     var copy = element('button', '', '게임 링크 복사'); copy.type = 'button'; copy.disabled = !p.gameUrl;
-    actions.appendChild(save); actions.appendChild(copy); dialog.appendChild(actions);
+    var linkOnly = element('button', '', '링크만 공유'); linkOnly.type = 'button'; linkOnly.disabled = !p.gameUrl || typeof root.navigator.share !== 'function';
+    actions.appendChild(save); actions.appendChild(copy); actions.appendChild(linkOnly); dialog.appendChild(actions);
     var manual = element('textarea', 'jm-share-copy'); manual.hidden = true; manual.readOnly = true; manual.setAttribute('aria-label', '복사할 게임 주소'); dialog.appendChild(manual);
     overlay.appendChild(dialog);
-    var state = { root: overlay, imageUrl: null, busy: false, focus: document.activeElement, file: null };
+    var state = { root: overlay, imageUrl: null, busy: false, ready: false, focus: document.activeElement, file: null };
     current = state;
     state.onKey = function (event) {
       if (event.key === 'Escape') { event.preventDefault(); close(); }
@@ -181,6 +184,19 @@
       status.textContent = p.gameUrl ? '이미지 저장을 요청했어요. 게임 링크도 복사해서 함께 보내주세요.' : '이미지 저장을 요청했어요. 게임 공개 후에는 접속 링크도 함께 넣을 수 있어요.';
     }
     save.onclick = download;
+    linkOnly.onclick = function () {
+      if (!p.gameUrl || state.busy || current !== state) return;
+      state.busy = true; primary.disabled = save.disabled = copy.disabled = dismiss.disabled = linkOnly.disabled = true;
+      var operation;
+      try { operation = root.navigator.share({ text: p.gameUrl }); } catch (error) { operation = Promise.reject(error); }
+      Promise.resolve(operation).then(function () { status.textContent = '링크 공유창 처리를 마쳤어요.'; }, function (error) {
+        status.textContent = error && error.name === 'AbortError' ? '공유를 취소했어요.' : '링크 공유창을 열지 못했어요. 게임 링크 복사를 이용해 주세요.';
+      }).finally(function () {
+        state.busy = false; primary.disabled = save.disabled = !state.ready; dismiss.disabled = false;
+        copy.disabled = linkOnly.disabled = !p.gameUrl;
+        if (state.disposeWhenDone) close();
+      });
+    };
     copy.onclick = function () {
       if (!p.gameUrl || state.busy) return;
       if (root.navigator.clipboard && root.isSecureContext) {
@@ -190,18 +206,18 @@
     };
     entry.ready.then(function () {
       if (current !== state) return;
-        if (!entry.blob) { status.textContent = '이미지를 만들지 못했어요. 닫은 뒤 다시 시도해 주세요.'; return; }
+        if (!entry.blob) { status.textContent = '공유 이미지나 글꼴을 준비하지 못했어요. 닫은 뒤 다시 시도해 주세요.'; return; }
         state.imageUrl = URL.createObjectURL(entry.blob); img.src = state.imageUrl;
-        state.file = entry.file;
+        state.file = entry.file; state.ready = true;
         var data = shareData(p, state.file);
         var supported = !!state.file && canShareFile(root.navigator, data);
         primary.disabled = false; save.disabled = false; save.hidden = !supported;
         primary.textContent = supported ? '이미지' + (p.gameUrl ? '와 링크' : '') + ' 공유하기' : '기록 이미지 저장';
         status.textContent = !p.gameUrl ? '공유할 공개 게임 주소가 아직 없어요. 공개 주소에서 실행하면 링크도 함께 들어가요.' :
-          supported ? '이미지와 게임 링크를 함께 보내요. 앱에 따라 링크를 따로 복사해야 할 수 있어요.' : '이 브라우저에서는 이미지를 저장한 뒤 게임 링크와 함께 보내주세요.';
+          supported ? '같은 기록 이미지와 게임 링크를 함께 보내요. 받은 앱에서 링크가 빠지면 링크만 공유를 이용해 주세요.' : '이 브라우저에서는 이미지를 저장한 뒤 게임 링크와 함께 보내주세요.';
         primary.onclick = supported ? function () {
           if (state.busy || current !== state) return;
-          state.busy = true; primary.disabled = save.disabled = copy.disabled = dismiss.disabled = true;
+          state.busy = true; primary.disabled = save.disabled = copy.disabled = dismiss.disabled = linkOnly.disabled = true;
           var operation;
           // 비동기 준비를 모두 마친 뒤 이 버튼의 사용자 동작 안에서 곧바로 공유 API를 호출한다.
           try { operation = root.navigator.share(data); } catch (error) { operation = Promise.reject(error); }
@@ -209,6 +225,7 @@
             status.textContent = error && error.name === 'AbortError' ? '공유를 취소했어요.' : '공유창을 열지 못했어요. 이미지 저장과 링크 복사를 이용해 주세요.';
           }).finally(function () {
             state.busy = false; primary.disabled = save.disabled = dismiss.disabled = false; copy.disabled = !p.gameUrl;
+            linkOnly.disabled = !p.gameUrl || typeof root.navigator.share !== 'function';
             if (state.disposeWhenDone) close();
           });
         } : download;
