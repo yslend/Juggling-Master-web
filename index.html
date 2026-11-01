@@ -15,18 +15,18 @@
 </head>
 <body>
   <div id="game"><canvas id="unity-canvas" tabindex="-1"></canvas><div id="loading">저글링마스터<progress id="progress" value="0" max="1"></progress></div><div id="error"></div></div>
-  <script src="share-card.js?v=FlameShare-20261028.loader.js-card4-common-font"></script>
-  <script src="Build/FlameShare-20261028.loader.js"></script>
+  <script src="share-card.js?v=WebGL.loader.js-card4-common-font"></script>
+  <script src="Build/WebGL.loader.js"></script>
   <script>
     var canvas = document.querySelector('#unity-canvas');
     createUnityInstance(canvas, {
-      dataUrl: 'Build/FlameShare-20261028.data',
-      frameworkUrl: 'Build/FlameShare-20261028.framework.js',
-      codeUrl: 'Build/FlameShare-20261028.wasm',
+      dataUrl: 'Build/WebGL.data.unityweb',
+      frameworkUrl: 'Build/WebGL.framework.js.unityweb',
+      codeUrl: 'Build/WebGL.wasm.unityweb',
       streamingAssetsUrl: 'StreamingAssets',
       companyName: "DefaultCompany",
-      productName: "Juggling Master",
-      productVersion: "0.1"
+      productName: "저글링마스터",
+      productVersion: "0.38.0"
     }, function(progress) { document.querySelector('#progress').value = progress; })
       .then(function(instance) { document.querySelector('#loading').remove(); canvas.focus(); })
       .catch(function(error) { document.querySelector('#loading').remove(); document.querySelector('#error').textContent = '게임을 불러오지 못했습니다.\n' + error; });
