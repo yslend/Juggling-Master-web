@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "protocol": 1,
+  "available": true,
+  "websocketUrl": "wss://dame-comprehensive-projection-extensions.trycloudflare.com/pvp",
+  "expiresUtc": "2026-11-09T23:05:43.016Z"
+}
