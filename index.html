@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>저글링마스터 · 0.44.0-pvp-customization</title>
+  <title>저글링마스터 · 0.44.0-start-menu</title>
   <style>
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111a29;font-family:sans-serif}
     #game{position:relative;margin:auto;width:min(100vw,75vh);height:100%;background:#111a29}
@@ -15,21 +15,21 @@
 </head>
 <body>
   <div id="game"><canvas id="unity-canvas" tabindex="-1"></canvas><div id="loading">저글링마스터<progress id="progress" value="0" max="1"></progress></div><div id="error"></div></div>
-  <script src="share-card.js?v=0.44.0-pvp-customization"></script>
-  <script src="pvp-invite.js?v=0.44.0-pvp-customization"></script>
-  <script src="mobile-text-input.js?v=0.44.0-pvp-customization"></script>
-  <script src="federated-auth.js?v=0.44.0-pvp-customization"></script>
-  <script src="Build/WebGL.loader.js?v=0.44.0-pvp-customization"></script>
+  <script src="share-card.js?v=0.44.0-start-menu"></script>
+  <script src="pvp-invite.js?v=0.44.0-start-menu"></script>
+  <script src="mobile-text-input.js?v=0.44.0-start-menu"></script>
+  <script src="federated-auth.js?v=0.44.0-start-menu"></script>
+  <script src="Build/WebGL.loader.js?v=0.44.0-start-menu"></script>
   <script>
     var canvas = document.querySelector('#unity-canvas');
     createUnityInstance(canvas, {
-      dataUrl: 'Build/WebGL.data.unityweb?v=0.44.0-pvp-customization',
-      frameworkUrl: 'Build/WebGL.framework.js.unityweb?v=0.44.0-pvp-customization',
-      codeUrl: 'Build/WebGL.wasm.unityweb?v=0.44.0-pvp-customization',
+      dataUrl: 'Build/WebGL.data.unityweb?v=0.44.0-start-menu',
+      frameworkUrl: 'Build/WebGL.framework.js.unityweb?v=0.44.0-start-menu',
+      codeUrl: 'Build/WebGL.wasm.unityweb?v=0.44.0-start-menu',
       streamingAssetsUrl: 'StreamingAssets',
       companyName: "DefaultCompany",
       productName: "저글링마스터",
-      productVersion: "0.44.0-pvp-customization"
+      productVersion: "0.44.0-start-menu"
     }, function(progress) { document.querySelector('#progress').value = progress; })
       .then(function(instance) { document.querySelector('#loading').remove(); canvas.focus(); })
       .catch(function(error) { document.querySelector('#loading').remove(); document.querySelector('#error').textContent = '게임을 불러오지 못했습니다.\n' + error; });
