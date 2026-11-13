@@ -30,7 +30,8 @@
     title.id = 'jm-text-editor-title'; title.htmlFor = 'jm-native-text-input'; form.appendChild(title);
     field = element(kind === 'multiline' ? 'textarea' : 'input', '', 'box-sizing:border-box;display:block;width:100%;height:50px;padding:10px 12px;border:2px solid #536987;border-radius:9px;background:white;color:#20314f;font:18px system-ui;user-select:text;-webkit-user-select:text;touch-action:manipulation;');
     if(kind === 'multiline'){field.style.height='min(40vh,260px)';field.style.resize='vertical';}
-    field.id = 'jm-native-text-input'; field.type = kind === 'password' ? 'password' : kind === 'email' ? 'email' : 'text';
+    field.id = 'jm-native-text-input';
+    if(kind !== 'multiline') field.type = kind === 'password' ? 'password' : kind === 'email' ? 'email' : 'text';
     field.inputMode = kind === 'email' ? 'email' : 'text'; field.autocomplete = kind === 'email' ? 'email' : 'off';
     field.autocapitalize = 'none'; field.spellcheck = false; field.enterKeyHint = 'done';
     field.maxLength = limit > 0 ? limit : 150; field.value = value || ''; form.appendChild(field);
