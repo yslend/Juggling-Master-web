@@ -1,7 +1,7 @@
 {
   "version": 1,
   "protocol": 2,
-  "available": true,
-  "websocketUrl": "wss://senators-becoming-walls-gamma.trycloudflare.com/pvp",
-  "expiresUtc": "2026-11-20T07:20:14.217Z"
+  "available": false,
+  "websocketUrl": "",
+  "expiresUtc": "2026-11-20T11:56:46.976Z"
 }
