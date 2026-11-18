@@ -17,7 +17,8 @@
   return sdk.get(url);
  }
  async function request(state,path,body){
-  const response=await fetch(state.origin+path,{method:body?'POST':'GET',credentials:'omit',signal:state.abort.signal,headers:{skip_zrok_interstitial:'1',...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+  const tunnel=new URL(state.origin).hostname.endsWith('.shares.zrok.io');
+  const response=await fetch(state.origin+path,{method:body?'POST':'GET',credentials:'omit',signal:state.abort.signal,headers:{...(tunnel?{skip_zrok_interstitial:'1'}:{}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
   let result;try{result=await response.json();}catch{throw Error('로그인 서버 응답을 확인하지 못했습니다. 잠시 후 다시 시도하세요.');}
   if(!response.ok)throw Error(result.Message||result.error||'로그인을 완료하지 못했습니다. 다시 시도해 주세요.');
   return result;
